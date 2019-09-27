@@ -142,28 +142,27 @@ func dialDHTxxAndGetResponse(pin int, handshakeDur time.Duration,
 // decodeByte decode data byte from specific pulse array position.
 func decodeByte(tLow, tHigh0, tHigh1 time.Duration, start int, pulses []Pulse) (byte, error) {
 	if len(pulses)-start < 16 {
-		return 0, fmt.Errorf("Can't decode byte, since range between "+
+		return 0, fmt.Errorf("can't decode byte, since range between "+
 			"index and array length is less than 16: %d, %d", start, len(pulses))
 	}
 	HIGH_DUR_MAX := tLow + tHigh1
 	HIGH_LOW_DUR_AVG := ((tLow+tHigh1)/2 + (tLow+tHigh0)/2) / 2
-	var b int = 0
+	b := 0
 	for i := 0; i < 8; i++ {
 		pulseL := pulses[start+i*2]
 		pulseH := pulses[start+i*2+1]
 		if pulseL.Value != 0 {
-			return 0, fmt.Errorf("Low edge value expected at index %d", start+i*2)
+			return 0, fmt.Errorf("low edge value expected at index %d", start+i*2)
 		}
 		if pulseH.Value == 0 {
-			return 0, fmt.Errorf("High edge value expected at index %d", start+i*2+1)
+			return 0, fmt.Errorf("high edge value expected at index %d", start+i*2+1)
 		}
 		// const HIGH_DUR_MAX = (70 + (70 + 54)) / 2 * time.Microsecond
 		// Calc average value between 24us (bit 0) and 70us (bit 1).
 		// Everything that less than this param is bit 0, bigger - bit 1.
 		// const HIGH_LOW_DUR_AVG = (24 + (70-24)/2) * time.Microsecond
 		if pulseH.Duration > HIGH_DUR_MAX {
-			return 0, fmt.Errorf("High edge value duration %v exceed "+
-				"maximum expected %v", pulseH.Duration, HIGH_DUR_MAX)
+			return 0, fmt.Errorf("high edge value duration %v exceed "+"maximum expected %v", pulseH.Duration, HIGH_DUR_MAX)
 		}
 		if pulseH.Duration > HIGH_LOW_DUR_AVG {
 			//fmt.Printf("bit %d is high\n", 7-i)
@@ -182,7 +181,7 @@ func decodeDHTxxPulses(sensorType SensorType, pulses []Pulse) (temperature float
 		pulses = pulses[len(pulses)-82:]
 	} else {
 		printPulseArrayForDebug(pulses)
-		return -1, -1, fmt.Errorf("Can't decode pulse array received from "+
+		return -1, -1, fmt.Errorf("can't decode pulse array received from "+
 			"DHTxx sensor, since incorrect length: %d", len(pulses))
 	}
 
@@ -253,9 +252,9 @@ func decodeDHTxxPulses(sensorType SensorType, pulses []Pulse) (temperature float
 	}
 	// additional check for data correctness
 	if humidity > 100.0 {
-		return -1, -1, fmt.Errorf("Humidity value exceed 100%%: %v", humidity)
+		return -1, -1, fmt.Errorf("humidity value exceed 100%%: %v", humidity)
 	} else if humidity == 0 {
-		return -1, -1, fmt.Errorf("Humidity value cannot be zero")
+		return -1, -1, errors.New("humidity value cannot be zero")
 	}
 	// success
 	return temperature, humidity, nil
